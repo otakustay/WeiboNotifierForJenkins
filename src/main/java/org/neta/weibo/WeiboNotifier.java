@@ -1,11 +1,13 @@
 package org.neta.weibo;
 import hudson.Launcher;
 import hudson.Extension;
+import hudson.scm.ChangeLogSet;
 import hudson.tasks.*;
 import hudson.util.FormValidation;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -13,6 +15,9 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Sample {@link Builder}.
@@ -54,6 +59,14 @@ public class WeiboNotifier extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        // Outputs project member -> sina weibo username mapping
+        for (Map.Entry<String, String> entry : getDescriptor().getUserMap().entrySet()) {
+            listener.getLogger().println(entry.getKey() + " " + entry.getValue());
+        }
+
+        // For debug
+//        listener.getLogger().println(getDescriptor().getS());
+
         return true;
     }
 
@@ -75,6 +88,11 @@ public class WeiboNotifier extends Notifier {
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+        private Map<String, String> userMap;
+
+        // For debug
+//        private String s;
+
         /**
          * Performs on-the-fly validation of the form field 'name'.
          *
@@ -106,9 +124,34 @@ public class WeiboNotifier extends Notifier {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+            JSONArray users = formData.getJSONArray("user");
+            userMap = new HashMap<String, String>();
+            for (int i = 0; i < users.size(); i++) {
+                userMap.put(
+                    users.getJSONObject(i).getString("memberName"),
+                    users.getJSONObject(i).getString("weiboName")
+                );
+            }
+
+            // For debug
+//            s = "";
+//            for (Object o : formData.entrySet()) {
+//                Map.Entry entry = (Map.Entry)o;
+//                s += entry.getKey() + "=" + entry.getValue();
+//            }
+
             save();
             return super.configure(req,formData);
         }
+
+        public Map<String, String> getUserMap() {
+            return userMap;
+        }
+
+        // For debug
+//        public String getS() {
+//            return s;
+//        }
     }
 }
 

@@ -1,7 +1,6 @@
 package org.neta.weibo;
 import hudson.Launcher;
 import hudson.Extension;
-import hudson.scm.ChangeLogSet;
 import hudson.tasks.*;
 import hudson.util.FormValidation;
 import hudson.model.AbstractBuild;
@@ -16,26 +15,9 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-/**
- * Sample {@link Builder}.
- *
- * <p>
- * When the user configures the project and enables this builder,
- * {@link DescriptorImpl#newInstance(StaplerRequest)} is invoked
- * and a new {@link WeiboNotifier} is created. The created
- * instance is persisted to the project configuration XML by using
- * XStream, so this allows you to use instance fields (like {@link #name})
- * to remember the configuration.
- *
- * <p>
- * When a build is performed, the {@link #perform(AbstractBuild, Launcher, BuildListener)}
- * method will be invoked. 
- *
- * @author Kohsuke Kawaguchi
- */
+@SuppressWarnings("UnusedDeclaration")
 public class WeiboNotifier extends Notifier {
 
     private final String name;
@@ -86,6 +68,7 @@ public class WeiboNotifier extends Notifier {
      * See <tt>src/main/resources/hudson/plugins/hello_world/WeiboNotifier/*.jelly</tt>
      * for the actual HTML fragment for the configuration screen.
      */
+    @SuppressWarnings("UnusedDeclaration")
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private Map<String, String> userMap;

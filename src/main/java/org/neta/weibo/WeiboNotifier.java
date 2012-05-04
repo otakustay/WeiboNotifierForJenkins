@@ -1,12 +1,11 @@
 package org.neta.weibo;
 import hudson.Launcher;
 import hudson.Extension;
+import hudson.tasks.*;
 import hudson.util.FormValidation;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
-import hudson.tasks.Builder;
-import hudson.tasks.BuildStepDescriptor;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -32,7 +31,7 @@ import java.io.IOException;
  *
  * @author Kohsuke Kawaguchi
  */
-public class WeiboNotifier extends Builder {
+public class WeiboNotifier extends Notifier {
 
     private final String name;
 
@@ -49,16 +48,12 @@ public class WeiboNotifier extends Builder {
         return name;
     }
 
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.BUILD;
+    }
+
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        // This is where you 'build' the project.
-        // Since this is a dummy, we just say 'hello world' and call that a build.
-
-        // This also shows how you can consult the global configuration of the builder
-        if (getDescriptor().useFrench())
-            listener.getLogger().println("Bonjour, "+name+"!");
-        else
-            listener.getLogger().println("Hello, "+name+"!");
         return true;
     }
 
@@ -79,16 +74,7 @@ public class WeiboNotifier extends Builder {
      * for the actual HTML fragment for the configuration screen.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        /**
-         * To persist global configuration information,
-         * simply store it in a field and call save().
-         *
-         * <p>
-         * If you don't want fields to be persisted, use <tt>transient</tt>.
-         */
-        private boolean useFrench;
-
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         /**
          * Performs on-the-fly validation of the form field 'name'.
          *
@@ -107,7 +93,7 @@ public class WeiboNotifier extends Builder {
         }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // Indicates that this builder can be used with all kinds of project types 
+            // Indicates that this builder can be used with all kinds of project types
             return true;
         }
 
@@ -115,25 +101,13 @@ public class WeiboNotifier extends Builder {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Say hello world";
+            return "Sina Weibo Notifier";
         }
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            // To persist global configuration information,
-            // set that to properties and call save().
-            useFrench = formData.getBoolean("useFrench");
-            // ^Can also use req.bindJSON(this, formData);
-            //  (easier when there are many fields; need set* methods for this, like setUseFrench)
             save();
             return super.configure(req,formData);
-        }
-
-        /**
-         * This method returns true if the global configuration says we should speak French.
-         */
-        public boolean useFrench() {
-            return useFrench;
         }
     }
 }

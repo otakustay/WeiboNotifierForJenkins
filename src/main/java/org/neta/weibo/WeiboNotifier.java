@@ -8,31 +8,35 @@ import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("UnusedDeclaration")
 public class WeiboNotifier extends Notifier {
 
-    private final String name;
+    private final String accessToken;
 
-    // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public WeiboNotifier(String name) {
-        this.name = name;
+    public WeiboNotifier(String accessToken) {
+        this.accessToken = accessToken;
     }
 
-    /**
-     * We'll use this from the <tt>config.jelly</tt>.
-     */
-    public String getName() {
-        return name;
+    public String getAccessToken() {
+        return accessToken;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -41,10 +45,14 @@ public class WeiboNotifier extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        listener.getLogger().println("access_token:" + getAccessToken());
+
         // Outputs project member -> sina weibo username mapping
         for (Map.Entry<String, String> entry : getDescriptor().getUserMap().entrySet()) {
             listener.getLogger().println(entry.getKey() + " " + entry.getValue());
         }
+
+        listener.getLogger().println("weibo notifier: done");
 
         // For debug
 //        listener.getLogger().println(getDescriptor().getS());
@@ -58,6 +66,24 @@ public class WeiboNotifier extends Notifier {
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl)super.getDescriptor();
+    }
+
+    private void publishWeiboStatus(String content) throws IOException {
+        List<NameValuePair> form = new ArrayList<NameValuePair>();
+        form.add(new BasicNameValuePair("access_token", getAccessToken()));
+        form.add(new BasicNameValuePair("status", content));
+        DefaultHttpClient client = new DefaultHttpClient();
+        try {
+            HttpPost post = new HttpPost("https://api.weibo.com/2/statuses/update.json");
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(form);
+            post.setEntity(entity);
+            BasicResponseHandler handler = new BasicResponseHandler();
+            String response = client.execute(post, handler);
+            System.out.println(response);
+        }
+        finally {
+            client.getConnectionManager().shutdown();
+        }
     }
 
     /**
@@ -76,20 +102,11 @@ public class WeiboNotifier extends Notifier {
         // For debug
 //        private String s;
 
-        /**
-         * Performs on-the-fly validation of the form field 'name'.
-         *
-         * @param value
-         *      This parameter receives the value that the user has typed.
-         * @return
-         *      Indicates the outcome of the validation. This is sent to the browser.
-         */
-        public FormValidation doCheckName(@QueryParameter String value)
+        public FormValidation doCheckAccessToken(@QueryParameter String value)
                 throws IOException, ServletException {
-            if (value.length() == 0)
-                return FormValidation.error("Please set a name");
-            if (value.length() < 4)
-                return FormValidation.warning("Isn't the name too short?");
+            if (value.length() == 0) {
+                return FormValidation.error("Please set your weibo access token");
+            }
             return FormValidation.ok();
         }
 

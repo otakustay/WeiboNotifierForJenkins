@@ -20,10 +20,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class WeiboNotifier extends Notifier {
@@ -146,6 +143,11 @@ public class WeiboNotifier extends Notifier {
 
         public Map<String, String> getUserMap() {
             return userMap;
+        }
+
+        // Jelly's f:repeatable cannot bind a Map interface, use this for binding to jelly
+        public Set<Map.Entry<String, String>> getUserSet() {
+            return getUserMap().entrySet();
         }
 
         // For debug

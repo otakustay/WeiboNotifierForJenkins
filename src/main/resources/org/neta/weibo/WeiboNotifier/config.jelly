@@ -1,5 +1,27 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Access Token" field="accessToken">
-    <f:textbox />
-  </f:entry>
+    <f:entry title="Access Token">
+        <f:textbox name="weibo.accessToken" value="${instance.accessToken}" />
+    </f:entry>
+    <f:section title="Set Notifier">
+        <f:entry title="When Fail">
+            <f:checkbox name="weibo.notifyOnFail" checked="${instance.notifyOnFail}" value="true" />
+            <label class="attach-previous">Notify via weibo.com</label>
+            <f:textarea name="weibo.failTemplate" value="${instance.failTemplate}" />
+        </f:entry>
+        <f:entry title="When Success">
+            <f:checkbox name="weibo.notifyOnSuccess" checked="${instance.notifyOnSuccess}" value="true" />
+            <label class="attach-previous">Notify via weibo.com</label>
+            <f:textarea name="weibo.successTemplate" value="${instance.successTemplate}" />
+        </f:entry>
+        <f:entry title="When Continously Fail">
+            <f:checkbox name="weibo.notifyOnContinuousFail" checked="${instance.notifyOnContinuousFail}" value="true" />
+            <label class="attach-previous">Notify via weibo.com</label>
+            <f:textarea name="weibo.continuousFailTemplate" value="${instance.continuousFailTemplate}" />
+        </f:entry>
+        <f:entry title="When Recover">
+            <f:checkbox name="weibo.notifyOnRecover" checked="${instance.notifyOnRecover}" value="true" />
+            <label class="attach-previous">Notify via weibo.com</label>
+            <f:textarea name="weibo.recoverTemplate" value="${instance.recoverTemplate}" />
+        </f:entry>
+    </f:section>
 </j:jelly>

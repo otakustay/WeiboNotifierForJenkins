@@ -13,7 +13,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -26,13 +25,72 @@ public class WeiboNotifier extends Notifier {
 
     private final String accessToken;
 
-    @DataBoundConstructor
-    public WeiboNotifier(String accessToken) {
+    private final Boolean notifyOnFail;
+
+    private final String failTemplate;
+
+    private final Boolean notifyOnSuccess;
+
+    private final String successTemplate;
+
+    private final Boolean notifyOnContinuousFail;
+
+    private final String continuousFailTemplate;
+
+    private final Boolean notifyOnRecover;
+
+    private final String recoverTemplate;
+
+    public WeiboNotifier(String accessToken,
+         Boolean notifyOnFail, String failTemplate,
+         Boolean notifyOnSuccess, String successTemplate,
+         Boolean notifyOnContinuousFail, String continuousFailTemplate,
+         Boolean notifyOnRecover, String recoverTemplate) {
         this.accessToken = accessToken;
+        this.notifyOnFail = notifyOnFail;
+        this.failTemplate = failTemplate;
+        this.notifyOnSuccess = notifyOnSuccess;
+        this.successTemplate = successTemplate;
+        this.notifyOnContinuousFail = notifyOnContinuousFail;
+        this.continuousFailTemplate = continuousFailTemplate;
+        this.notifyOnRecover = notifyOnRecover;
+        this.recoverTemplate = recoverTemplate;
     }
 
     public String getAccessToken() {
         return accessToken;
+    }
+
+    public Boolean getNotifyOnFail() {
+        return notifyOnFail;
+    }
+
+    public String getFailTemplate() {
+        return failTemplate;
+    }
+
+    public Boolean getNotifyOnSuccess() {
+        return notifyOnSuccess;
+    }
+
+    public String getSuccessTemplate() {
+        return successTemplate;
+    }
+
+    public Boolean getNotifyOnContinuousFail() {
+        return notifyOnContinuousFail;
+    }
+
+    public String getContinuousFailTemplate() {
+        return continuousFailTemplate;
+    }
+
+    public Boolean getNotifyOnRecover() {
+        return notifyOnRecover;
+    }
+
+    public String getRecoverTemplate() {
+        return recoverTemplate;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -168,8 +226,36 @@ public class WeiboNotifier extends Notifier {
             return super.configure(req,formData);
         }
 
+        @Override
+        public WeiboNotifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            String accessToken = formData.getString("accessToken");
+            Boolean notifyOnFail = formData.getBoolean("notifyOnFail");
+            String failTemplate = formData.getString("failTemplate");
+            Boolean notifyOnSuccess = formData.getBoolean("notifyOnSuccess");
+            String successTemplate = formData.getString("successTemplate");
+            Boolean notifyOnContinuousFail = formData.getBoolean("notifyOnContinuousFail");
+            String continuousFailTemplate = formData.getString("continuousFailTemplate");
+            Boolean notifyOnRecover = formData.getBoolean("notifyOnRecover");
+            String recoverTemplate = formData.getString("recoverTemplate");
+
+            return new WeiboNotifier(
+                    accessToken,
+                    notifyOnFail, failTemplate,
+                    notifyOnSuccess, successTemplate,
+                    notifyOnContinuousFail, continuousFailTemplate,
+                    notifyOnRecover, recoverTemplate
+            );
+        }
+
         public Map<String, String> getUserMap() {
             return userMap;
+        }
+
+        private static Boolean toBoolean(String value) {
+            if ("true".equals(value)) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
         }
     }
 }

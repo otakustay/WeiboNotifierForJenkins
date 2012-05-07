@@ -52,9 +52,6 @@ public class WeiboNotifier extends Notifier {
 
         listener.getLogger().println("weibo notifier: done");
 
-        // For debug
-//        listener.getLogger().println(getDescriptor().getS());
-
         return true;
     }
 
@@ -117,9 +114,6 @@ public class WeiboNotifier extends Notifier {
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private Map<String, String> userMap;
 
-        // For debug
-//        private String s;
-
         public DescriptorImpl() {
             super(WeiboNotifier.class);
             load();
@@ -170,13 +164,6 @@ public class WeiboNotifier extends Notifier {
                 }
             }
 
-            // For debug
-//            s = "";
-//            for (Object o : formData.entrySet()) {
-//                Map.Entry entry = (Map.Entry)o;
-//                s += entry.getKey() + "=" + entry.getValue();
-//            }
-
             save();
             return super.configure(req,formData);
         }
@@ -184,11 +171,6 @@ public class WeiboNotifier extends Notifier {
         public Map<String, String> getUserMap() {
             return userMap;
         }
-
-        // For debug
-//        public String getS() {
-//            return s;
-//        }
     }
 }
 

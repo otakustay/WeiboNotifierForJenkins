@@ -1,12 +1,11 @@
 package org.neta.weibo;
 import hudson.Launcher;
 import hudson.Extension;
+import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.FormValidation;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
-import hudson.model.AbstractProject;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -49,6 +48,8 @@ public class WeiboNotifier extends Notifier {
             listener.getLogger().println(entry.getKey() + " " + entry.getValue());
         }
 
+        listener.getLogger().println("build result: " + determineBuildResult(build));
+
         listener.getLogger().println("weibo notifier: done");
 
         // For debug
@@ -63,6 +64,26 @@ public class WeiboNotifier extends Notifier {
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl)super.getDescriptor();
+    }
+
+    private static BuildResult determineBuildResult(Run build) {
+        Result result = build.getResult();
+        Run previousBuild = build.getPreviousBuild();
+        if (previousBuild == null) {
+            return result.isBetterOrEqualTo(Result.SUCCESS) ? BuildResult.SUCCESS : BuildResult.FAIL;
+        }
+
+        Result previousResult = previousBuild.getResult();
+        if (previousResult.isBetterOrEqualTo(Result.SUCCESS)) {
+            // Success -> Success = Success
+            // Success -> Fail = Fail
+            return result.isBetterOrEqualTo(Result.SUCCESS) ? BuildResult.SUCCESS : BuildResult.FAIL;
+        }
+        else {
+            // Fail -> Fail = ContinuousFail
+            // Fail -> Success = Recover
+            return result.isBetterOrEqualTo(Result.SUCCESS) ? BuildResult.RECOVER : BuildResult.CONTINUOUS_FAIL;
+        }
     }
 
     private void publishWeiboStatus(String content) throws IOException {
@@ -99,6 +120,11 @@ public class WeiboNotifier extends Notifier {
         // For debug
 //        private String s;
 
+        public DescriptorImpl() {
+            super(WeiboNotifier.class);
+            load();
+        }
+
         public FormValidation doCheckAccessToken(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0) {
@@ -121,13 +147,27 @@ public class WeiboNotifier extends Notifier {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            JSONArray users = formData.getJSONArray("user");
             userMap = new HashMap<String, String>();
-            for (int i = 0; i < users.size(); i++) {
-                userMap.put(
-                    users.getJSONObject(i).getString("memberName"),
-                    users.getJSONObject(i).getString("weiboName")
-                );
+            if (formData.has("user")) {
+                try {
+                    JSONArray users = formData.getJSONArray("user");
+                    for (int i = 0; i < users.size(); i++) {
+                        String memberName = users.getJSONObject(i).getString("memberName");
+                        String weiboName = users.getJSONObject(i).getString("weiboName");
+                        if (memberName.length() > 0 && weiboName.length() > 0) {
+                            userMap.put(memberName, weiboName);
+                        }
+                    }
+                }
+                catch (JSONException ex) {
+                    // Only one user mapping specified
+                    JSONObject user = formData.getJSONObject("user");
+                    String memberName = user.getString("memberName");
+                    String weiboName = user.getString("weiboName");
+                    if (memberName.length() > 0 && weiboName.length() > 0) {
+                        userMap.put(memberName, weiboName);
+                    }
+                }
             }
 
             // For debug
@@ -143,11 +183,6 @@ public class WeiboNotifier extends Notifier {
 
         public Map<String, String> getUserMap() {
             return userMap;
-        }
-
-        // Jelly's f:repeatable cannot bind a Map interface, use this for binding to jelly
-        public Set<Map.Entry<String, String>> getUserSet() {
-            return getUserMap().entrySet();
         }
 
         // For debug

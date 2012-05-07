@@ -9,6 +9,11 @@
                     <f:entry title="Weibo Name">
                         <f:textbox name="weiboName" value="${user.value}" />
                     </f:entry>
+                    <f:entry>
+                        <div style="text-align: right;">
+                            <input type="button" value="Delete this member" class="repeatable-delete" />
+                        </div>
+                    </f:entry>
                 </table>
             </f:repeatable>
         </f:entry>

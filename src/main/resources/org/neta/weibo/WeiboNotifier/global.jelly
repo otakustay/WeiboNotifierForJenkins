@@ -4,10 +4,10 @@
             <f:repeatable var="user" items="${descriptor.userMap}">
                 <table width="100%">
                     <f:entry title="Member Name">
-                        <f:textbox name="memberName" value="${user.key}" />
+                        <f:textbox name="weibo.memberName" value="${user.key}" />
                     </f:entry>
                     <f:entry title="Weibo Name">
-                        <f:textbox name="weiboName" value="${user.value}" />
+                        <f:textbox name="weibo.weiboName" value="${user.value}" />
                     </f:entry>
                     <f:entry>
                         <div style="text-align: right;">

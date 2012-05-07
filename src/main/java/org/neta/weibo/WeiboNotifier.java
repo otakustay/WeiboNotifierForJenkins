@@ -2,13 +2,14 @@ package org.neta.weibo;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.*;
+import hudson.scm.ChangeLogSet;
 import hudson.tasks.*;
 import hudson.util.FormValidation;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
+import net.sf.json.*;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -18,10 +19,15 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class WeiboNotifier extends Notifier {
+    private static final Character AUTHOR_SEPARATOR = ' ';
+
+    private static final Character ZERO_WIDTH_SPACE = '\uFEFF';
+
     private final String accessToken;
 
     private final Boolean notifyOnFail;
@@ -98,14 +104,14 @@ public class WeiboNotifier extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        listener.getLogger().println("access_token:" + getAccessToken());
-
-        // Outputs project member -> sina weibo username mapping
-        for (Map.Entry<String, String> entry : getDescriptor().getUserMap().entrySet()) {
-            listener.getLogger().println(entry.getKey() + " " + entry.getValue());
+        try {
+            String content = getWeiboStatusContent(build);
+            listener.getLogger().println(content);
         }
-
-        listener.getLogger().println("build result: " + determineBuildResult(build));
+        catch (IOException e) {
+            listener.getLogger().println("Error publishing status to weibo.com:");
+            e.printStackTrace(listener.getLogger());
+        }
 
         listener.getLogger().println("weibo notifier: done");
 
@@ -140,6 +146,66 @@ public class WeiboNotifier extends Notifier {
         }
     }
 
+    private String getWeiboStatusContent(AbstractBuild build) throws IOException {
+        BuildResult result = determineBuildResult(build);
+        String template = "";
+        switch (result) {
+            case SUCCESS:
+                template = successTemplate;
+                break;
+            case FAIL:
+                template = failTemplate;
+                break;
+            case CONTINUOUS_FAIL:
+                template = continuousFailTemplate;
+                break;
+            case RECOVER:
+                template = recoverTemplate;
+                break;
+        }
+        
+        String authors = getAuthorsFromBuild(build);
+        Date time = build.getTime();
+        String url = getBuildUrl(build);
+
+        return String.format(template, authors, time, url);
+    }
+
+    private String getBuildUrl(AbstractBuild build) throws IOException {
+        // TODO: Fix usage of getAbsoluteUrl
+        String absoluteUrl = build.getAbsoluteUrl();
+
+        // Make short url
+        DefaultHttpClient client = new DefaultHttpClient();
+        String requestUrl = "https://api.weibo.com/2/short_url/shorten.json?";
+        requestUrl += "access_token=" + URLEncoder.encode(getAccessToken(), "UTF-8");
+        requestUrl += "&url_long=" + URLEncoder.encode(absoluteUrl, "UTf-8");
+        try {
+            HttpGet get = new HttpGet(requestUrl);
+            BasicResponseHandler handler = new BasicResponseHandler();
+            String json = client.execute(get, handler);
+            JSONObject result = (JSONObject)JSONSerializer.toJSON(json);
+            return result.getJSONArray("urls").getJSONObject(0).getString("url_short");
+        }
+        finally {
+            client.getConnectionManager().shutdown();
+        }
+    }
+
+    private String getAuthorsFromBuild(AbstractBuild build) {
+        Map<String, String> userMap = getDescriptor().getUserMap();
+        ChangeLogSet<ChangeLogSet.Entry> changes = build.getChangeSet();
+        ArrayList<String> authors = new ArrayList<String>();
+        for (ChangeLogSet.Entry entry : changes) {
+            String memberName = entry.getAuthor().getDisplayName();
+            if (userMap.containsKey(memberName)) {
+                authors.add(userMap.get(memberName));
+            }
+        }
+
+        return StringUtils.join(authors, AUTHOR_SEPARATOR) + ZERO_WIDTH_SPACE;
+    }
+
     private void publishWeiboStatus(String content) throws IOException {
         List<NameValuePair> form = new ArrayList<NameValuePair>();
         form.add(new BasicNameValuePair("access_token", getAccessToken()));
@@ -151,7 +217,6 @@ public class WeiboNotifier extends Notifier {
             post.setEntity(entity);
             BasicResponseHandler handler = new BasicResponseHandler();
             String response = client.execute(post, handler);
-            System.out.println(response);
         }
         finally {
             client.getConnectionManager().shutdown();

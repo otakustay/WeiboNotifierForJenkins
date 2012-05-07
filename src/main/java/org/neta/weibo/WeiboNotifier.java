@@ -22,7 +22,6 @@ import java.util.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class WeiboNotifier extends Notifier {
-
     private final String accessToken;
 
     private final Boolean notifyOnFail;
@@ -42,10 +41,10 @@ public class WeiboNotifier extends Notifier {
     private final String recoverTemplate;
 
     public WeiboNotifier(String accessToken,
-         Boolean notifyOnFail, String failTemplate,
-         Boolean notifyOnSuccess, String successTemplate,
-         Boolean notifyOnContinuousFail, String continuousFailTemplate,
-         Boolean notifyOnRecover, String recoverTemplate) {
+        Boolean notifyOnFail, String failTemplate,
+        Boolean notifyOnSuccess, String successTemplate,
+        Boolean notifyOnContinuousFail, String continuousFailTemplate,
+        Boolean notifyOnRecover, String recoverTemplate) {
         this.accessToken = accessToken;
         this.notifyOnFail = notifyOnFail;
         this.failTemplate = failTemplate;

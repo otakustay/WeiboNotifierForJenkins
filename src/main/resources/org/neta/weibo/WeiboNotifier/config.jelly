@@ -1,27 +1,36 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <!-- 中华文学，博大精深，可萌可厉，非西学所能比拟 -->
     <f:entry title="Access Token">
         <f:textbox name="weibo.accessToken" value="${instance.accessToken}" />
     </f:entry>
     <f:section title="Set Notifier">
         <f:entry title="When Fail">
-            <f:checkbox name="weibo.notifyOnFail" checked="${instance.notifyOnFail}" value="true" />
+            <f:checkbox name="weibo.notifyOnFail"
+                checked="${instance.notifyOnFail}" default="true" />
             <label class="attach-previous">Notify via weibo.com</label>
-            <f:textarea name="weibo.failTemplate" value="${instance.failTemplate}" />
+            <f:textarea name="weibo.failTemplate" value="${instance.failTemplate}"
+                default="%1$s刚才ci进来的东西弄得人家好难受，快点来看看啊，不然我就要坏~掉~了~ %3$s"/>
         </f:entry>
         <f:entry title="When Success">
-            <f:checkbox name="weibo.notifyOnSuccess" checked="${instance.notifyOnSuccess}" value="true" />
+            <f:checkbox name="weibo.notifyOnSuccess"
+                checked="${instance.notifyOnSuccess}" />
             <label class="attach-previous">Notify via weibo.com</label>
-            <f:textarea name="weibo.successTemplate" value="${instance.successTemplate}" />
+            <f:textarea name="weibo.successTemplate" value="${instance.successTemplate}"
+                default="呼~%1$s刚才ci进来的东西好舒服啊，感觉满满的好温暖哦~ %3$s"/>
         </f:entry>
         <f:entry title="When Continously Fail">
-            <f:checkbox name="weibo.notifyOnContinuousFail" checked="${instance.notifyOnContinuousFail}" value="true" />
+            <f:checkbox name="weibo.notifyOnContinuousFail"
+                checked="${instance.notifyOnContinuousFail}" default="true" />
             <label class="attach-previous">Notify via weibo.com</label>
-            <f:textarea name="weibo.continuousFailTemplate" value="${instance.continuousFailTemplate}" />
+            <f:textarea name="weibo.continuousFailTemplate" value="${instance.continuousFailTemplate}"
+                default="啊人家还没好呢，%1$s又ci进来什么东西，更加难受了，要坏掉了啦！ %3$s"/>
         </f:entry>
         <f:entry title="When Recover">
-            <f:checkbox name="weibo.notifyOnRecover" checked="${instance.notifyOnRecover}" value="true" />
+            <f:checkbox name="weibo.notifyOnRecover"
+                checked="${instance.notifyOnRecover}" default="true" />
             <label class="attach-previous">Notify via weibo.com</label>
-            <f:textarea name="weibo.recoverTemplate" value="${instance.recoverTemplate}" />
+            <f:textarea name="weibo.recoverTemplate" value="${instance.recoverTemplate}"
+                default="呜终于舒服了，还是%1$s对我好，ci进来的东西不那么难受了~ %3$s"/>
         </f:entry>
     </f:section>
 </j:jelly>

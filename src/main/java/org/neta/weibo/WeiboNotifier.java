@@ -24,9 +24,12 @@ import java.util.*;
 
 @SuppressWarnings("UnusedDeclaration")
 public class WeiboNotifier extends Notifier {
-    private static final Character AUTHOR_SEPARATOR = ' ';
+    private static final char AUTHOR_SEPARATOR = ' ';
 
-    private static final Character ZERO_WIDTH_SPACE = '\uFEFF';
+    private static final char ZERO_WIDTH_SPACE = '\uFEFF';
+
+    // "不知道是谁"
+    private static String NO_AUTHOR = "\u4E0D\u77E5\u9053\u662F\u8C01";
 
     private final String accessToken;
 
@@ -107,6 +110,7 @@ public class WeiboNotifier extends Notifier {
         try {
             String content = getWeiboStatusContent(build);
             listener.getLogger().println(content);
+            publishWeiboStatus(content);
         }
         catch (IOException e) {
             listener.getLogger().println("Error publishing status to weibo.com:");
@@ -163,10 +167,12 @@ public class WeiboNotifier extends Notifier {
                 template = recoverTemplate;
                 break;
         }
-        
+
         String authors = getAuthorsFromBuild(build);
         Date time = build.getTime();
         String url = getBuildUrl(build);
+
+        // TODO: What if message size is greater than limit
 
         return String.format(template, authors, time, url);
     }
@@ -199,11 +205,13 @@ public class WeiboNotifier extends Notifier {
         for (ChangeLogSet.Entry entry : changes) {
             String memberName = entry.getAuthor().getDisplayName();
             if (userMap.containsKey(memberName)) {
-                authors.add(userMap.get(memberName));
+                authors.add("@" + userMap.get(memberName));
             }
         }
 
-        return StringUtils.join(authors, AUTHOR_SEPARATOR) + ZERO_WIDTH_SPACE;
+        return authors.size() == 0 ?
+            NO_AUTHOR + ZERO_WIDTH_SPACE :
+            StringUtils.join(authors, AUTHOR_SEPARATOR) + ZERO_WIDTH_SPACE;
     }
 
     private void publishWeiboStatus(String content) throws IOException {
@@ -213,7 +221,7 @@ public class WeiboNotifier extends Notifier {
         DefaultHttpClient client = new DefaultHttpClient();
         try {
             HttpPost post = new HttpPost("https://api.weibo.com/2/statuses/update.json");
-            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(form);
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(form, "UTF-8");
             post.setEntity(entity);
             BasicResponseHandler handler = new BasicResponseHandler();
             String response = client.execute(post, handler);

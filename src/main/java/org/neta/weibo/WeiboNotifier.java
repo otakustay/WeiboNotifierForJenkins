@@ -26,8 +26,6 @@ import java.util.*;
 public class WeiboNotifier extends Notifier {
     private static final char AUTHOR_SEPARATOR = ' ';
 
-    private static final char ZERO_WIDTH_SPACE = '\uFEFF';
-
     // "不知道是谁"
     private static String NO_AUTHOR = "\u4E0D\u77E5\u9053\u662F\u8C01";
 
@@ -210,8 +208,7 @@ public class WeiboNotifier extends Notifier {
         }
 
         return authors.size() == 0 ?
-            NO_AUTHOR + ZERO_WIDTH_SPACE :
-            StringUtils.join(authors, AUTHOR_SEPARATOR) + ZERO_WIDTH_SPACE;
+            NO_AUTHOR : StringUtils.join(authors, AUTHOR_SEPARATOR) + AUTHOR_SEPARATOR;
     }
 
     private void publishWeiboStatus(String content) throws IOException {
